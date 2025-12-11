@@ -47,6 +47,10 @@ endDate: 2025-10-18
 
 Any JavaScript-parseable date format is supported. For multi-day events, configure both a start date and an optional end date property.
 
+### Image and property overlay
+
+This fork adds the ability to put images in the daily cells, as defined by a property. It also permits adjusting the size of the day number and the opacity of the pill behind each overlaid property. There's also a slider to adjust the height of the day cells.
+
 ## Credits
 
 This plugin uses [FullCalendar](https://github.com/fullcalendar/fullcalendar).

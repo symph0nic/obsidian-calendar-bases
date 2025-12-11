@@ -1,11 +1,12 @@
 {
 	"name": "calendar-bases",
-	"version": "0.2.1",
-	"description": "Adds calendar view to Obsidian Bases.",
+	"version": "0.3.0",
+	"description": "Adds calendar view to Obsidian Bases, with image support.",
 	"main": "main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
 		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
+		"deploy": "npm run build && ./deploy.sh",
 		"version": "node version-bump.mjs && git add manifest.json versions.json"
 	},
 	"keywords": [

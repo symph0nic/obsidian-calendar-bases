@@ -9,11 +9,16 @@ import FullCalendar from "@fullcalendar/react";
 import { BasesEntry, BasesPropertyId, DateValue, Value } from "obsidian";
 import React, { useCallback, useRef } from "react";
 import { useApp } from "./hooks";
+import { resolveEntryImage } from "./utils/entry-images";
+import { tryGetValue } from "./utils/bases";
 
 interface CalendarReactViewProps {
   entries: CalendarEntry[];
   weekStartDay: number;
   properties: BasesPropertyId[];
+  imageProperty?: BasesPropertyId | null;
+  propertyOverlayOpacity: number;
+  alignPropertiesBottom: boolean;
   onEntryClick: (entry: BasesEntry, isModEvent: boolean) => void;
   onEntryContextMenu: (evt: React.MouseEvent, entry: BasesEntry) => void;
   onEventDrop?: (
@@ -28,6 +33,9 @@ export const CalendarReactView: React.FC<CalendarReactViewProps> = ({
   entries,
   weekStartDay,
   properties,
+  imageProperty,
+  propertyOverlayOpacity,
+  alignPropertiesBottom,
   onEntryClick,
   onEntryContextMenu,
   onEventDrop,
@@ -170,6 +178,19 @@ export const CalendarReactView: React.FC<CalendarReactViewProps> = ({
   const PropertyValue: React.FC<{ value: Value }> = ({ value }) => {
     const elementRef = useCallback(
       (node: HTMLElement | null) => {
+        const forceReadable = (element: HTMLElement) => {
+          element.style.setProperty("color", "inherit", "important");
+          element.style.setProperty("opacity", "1", "important");
+          element.style.setProperty("filter", "none", "important");
+          element
+            .querySelectorAll<HTMLElement>("*")
+            .forEach((child) => {
+              child.style.setProperty("color", "inherit", "important");
+              child.style.setProperty("opacity", "1", "important");
+              child.style.setProperty("filter", "none", "important");
+            });
+        };
+
         if (node && app) {
           // Remove previous content (due to React strict mode causing double calls)
           while (node.firstChild) {
@@ -178,6 +199,7 @@ export const CalendarReactView: React.FC<CalendarReactViewProps> = ({
 
           if (!(value instanceof DateValue)) {
             value.renderTo(node, app.renderContext);
+             forceReadable(node);
             return;
           }
 
@@ -207,6 +229,7 @@ export const CalendarReactView: React.FC<CalendarReactViewProps> = ({
               );
             }
 
+            forceReadable(node);
             return;
           }
         }
@@ -231,40 +254,167 @@ export const CalendarReactView: React.FC<CalendarReactViewProps> = ({
         }
       }
 
-      if (validProperties.length > 0) {
-        const firstProperty = validProperties[0];
+      const previewImage = resolveEntryImage(app, entry, imageProperty);
+      const eventClasses = ["bases-calendar-event"];
+      if (previewImage) {
+        eventClasses.push("bases-calendar-event--with-image");
+      } else {
+        eventClasses.push("bases-calendar-event--no-image");
+      }
+      if (alignPropertiesBottom) {
+        eventClasses.push("bases-calendar-event--align-bottom");
+      }
+      const hasProperties = validProperties.length > 0;
+      const overlayBackground =
+        propertyOverlayOpacity > 0
+          ? `rgba(0, 0, 0, ${propertyOverlayOpacity})`
+          : undefined;
+      const chipOverlayStyle =
+        overlayBackground !== undefined
+          ? {
+              backgroundColor: overlayBackground,
+              border: "none",
+            }
+          : {
+              backgroundColor: "transparent",
+              border: "none",
+            };
+      const nonImageOverlayStyle =
+        !previewImage && overlayBackground
+          ? { backgroundColor: overlayBackground }
+          : undefined;
+
+      if (previewImage) {
+        const renderChip = (
+          content: React.ReactNode,
+          key: string | number,
+          extraClass?: string,
+        ) => (
+          <div
+            key={key}
+            className={["bases-calendar-event-chip", extraClass]
+              .filter(Boolean)
+              .join(" ")}
+            style={{
+              ...chipOverlayStyle,
+              color: "var(--text-on-accent)",
+              filter: "brightness(1) saturate(1)",
+              mixBlendMode: "normal",
+            }}
+          >
+            {content}
+          </div>
+        );
+
+        const contentClasses = ["bases-calendar-event-content"];
+        if (alignPropertiesBottom) {
+          contentClasses.push("bases-calendar-event-content--align-bottom");
+        }
+
         const remainingProperties = validProperties.slice(1);
 
         return (
-          <div className="bases-calendar-event-content">
-            <div className="bases-calendar-event-title">
-              <PropertyValue value={firstProperty.value} />
-            </div>
-            {remainingProperties.length > 0 && (
-              <div className="bases-calendar-event-properties">
-                {remainingProperties.map(({ propertyId: prop, value }) => (
-                  <div key={prop} className="bases-calendar-event-property">
-                    <span className="bases-calendar-event-property-value">
-                      <PropertyValue value={value} />
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        );
-      } else {
-        // Fallback to file basename if no properties
-        return (
-          <div className="bases-calendar-event-content">
-            <div className="bases-calendar-event-title">
-              {entry.file.basename}
+          <div className={eventClasses.join(" ")}>
+            <div
+              className="bases-calendar-event-image"
+              style={{ backgroundImage: `url(${previewImage.url})` }}
+            />
+            <div className="bases-calendar-event-scrim" />
+            <div className={contentClasses.join(" ")}>
+              {hasProperties ? (
+                    <>
+                      {renderChip(
+                        <div className="bases-calendar-event-title">
+                          <PropertyValue value={validProperties[0].value} />
+                        </div>,
+                        validProperties[0].propertyId,
+                        "bases-calendar-event-chip--title",
+                      )}
+                  {remainingProperties.length > 0 && (
+                    <div className="bases-calendar-event-properties">
+                      {remainingProperties.map(({ propertyId: prop, value }) =>
+                        renderChip(
+                          <span className="bases-calendar-event-property-value">
+                            <PropertyValue value={value} />
+                          </span>,
+                          prop,
+                        ),
+                      )}
+                    </div>
+                  )}
+                </>
+              ) : (
+                renderChip(
+                  <div className="bases-calendar-event-title">
+                    {entry.file.basename}
+                  </div>,
+                  "basename",
+                  "bases-calendar-event-chip--title",
+                )
+              )}
             </div>
           </div>
         );
       }
+
+      if (hasProperties) {
+        const firstProperty = validProperties[0];
+        const remainingProperties = validProperties.slice(1);
+        const contentClasses = ["bases-calendar-event-content"];
+        if (alignPropertiesBottom) {
+          contentClasses.push("bases-calendar-event-content--align-bottom");
+        }
+
+        return (
+          <div className={eventClasses.join(" ")}>
+            <div
+              className={contentClasses.join(" ")}
+              style={nonImageOverlayStyle}
+            >
+              <div className="bases-calendar-event-title">
+                <PropertyValue value={firstProperty.value} />
+              </div>
+              {remainingProperties.length > 0 && (
+                <div className="bases-calendar-event-properties">
+                  {remainingProperties.map(({ propertyId: prop, value }) => (
+                    <div key={prop} className="bases-calendar-event-property">
+                      <span className="bases-calendar-event-property-value">
+                        <PropertyValue value={value} />
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      }
+
+      // Fallback to file basename if no properties or image
+      const contentClasses = ["bases-calendar-event-content"];
+      if (alignPropertiesBottom) {
+        contentClasses.push("bases-calendar-event-content--align-bottom");
+      }
+      return (
+        <div className={eventClasses.join(" ")}>
+          <div
+            className={contentClasses.join(" ")}
+            style={nonImageOverlayStyle}
+          >
+            <div className="bases-calendar-event-title">
+              {entry.file.basename}
+            </div>
+          </div>
+        </div>
+      );
     },
-    [properties, app, hasNonEmptyValue],
+    [
+      properties,
+      app,
+      hasNonEmptyValue,
+      imageProperty,
+      propertyOverlayOpacity,
+    ],
   );
 
   return (
@@ -300,12 +450,4 @@ interface CalendarEntry {
   entry: BasesEntry;
   startDate: Date;
   endDate?: Date;
-}
-
-function tryGetValue(entry: BasesEntry, propId: BasesPropertyId): Value | null {
-  try {
-    return entry.getValue(propId);
-  } catch {
-    return null;
-  }
 }

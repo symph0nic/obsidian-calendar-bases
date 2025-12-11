@@ -31,6 +31,11 @@ export class CalendarView extends BasesView {
   private entries: CalendarEntry[] = [];
   private startDateProp: BasesPropertyId | null = null;
   private endDateProp: BasesPropertyId | null = null;
+  private imageProp: BasesPropertyId | null = null;
+  private propertyOverlayOpacity: number = 0;
+  private dayNumberSize: number = 18;
+  private alignPropertiesBottom: boolean = false;
+  private dayCellHeight: number = 120;
   private weekStartDay: number = 1;
 
   constructor(controller: QueryController, scrollEl: HTMLElement) {
@@ -72,6 +77,14 @@ export class CalendarView extends BasesView {
   private loadConfig(): void {
     this.startDateProp = this.config.getAsPropertyId("startDate");
     this.endDateProp = this.config.getAsPropertyId("endDate");
+    this.imageProp = this.config.getAsPropertyId("imageProperty");
+    this.propertyOverlayOpacity = this.getOverlayOpacity();
+    this.dayNumberSize = this.getDayNumberSize();
+    this.alignPropertiesBottom = this.getBooleanConfig(
+      "alignPropertiesBottom",
+    );
+    this.dayCellHeight = this.getDayCellHeight();
+    this.applyDayNumberStyles();
     const weekStartDayValue = this.config.get("weekStartDay") as string;
 
     const dayNameToNumber: Record<string, number> = {
@@ -129,6 +142,9 @@ export class CalendarView extends BasesView {
             entries={this.entries}
             weekStartDay={this.weekStartDay}
             properties={this.config.getOrder() || []}
+            imageProperty={this.imageProp}
+            propertyOverlayOpacity={this.propertyOverlayOpacity}
+            alignPropertiesBottom={this.alignPropertiesBottom}
             onEntryClick={(entry, isModEvent) => {
               void this.app.workspace.openLinkText(
                 entry.file.path,
@@ -286,6 +302,119 @@ export class CalendarView extends BasesView {
           },
         ],
       },
+      {
+        displayName: "Display",
+        type: "group",
+        items: [
+          {
+            displayName: "Image property (optional)",
+            type: "property",
+            key: "imageProperty",
+            placeholder: "Property",
+          },
+          {
+            displayName: "Property overlay opacity",
+            type: "slider",
+            key: "propertyOverlayOpacity",
+            default: 60,
+            min: 0,
+            max: 100,
+            step: 5,
+          },
+          {
+            displayName: "Day number size",
+            type: "slider",
+            key: "dayNumberSize",
+            default: 18,
+            min: 12,
+            max: 40,
+            step: 1,
+          },
+          {
+            displayName: "Align properties to bottom",
+            type: "toggle",
+            key: "alignPropertiesBottom",
+            default: false,
+          },
+          {
+            displayName: "Day cell height",
+            type: "slider",
+            key: "dayCellHeight",
+            default: 120,
+            min: 80,
+            max: 220,
+            step: 10,
+          },
+        ],
+      },
     ];
+  }
+
+  private getOverlayOpacity(): number {
+    const rawValue = this.config.get("propertyOverlayOpacity");
+    const numericValue =
+      typeof rawValue === "number"
+        ? rawValue
+        : typeof rawValue === "string"
+          ? Number(rawValue)
+          : undefined;
+    if (typeof numericValue !== "number" || Number.isNaN(numericValue)) {
+      return 0.6;
+    }
+    const clamped = Math.max(0, Math.min(100, numericValue));
+    return clamped / 100;
+  }
+
+  private getDayNumberSize(): number {
+    const rawValue = this.config.get("dayNumberSize");
+    const numericValue =
+      typeof rawValue === "number"
+        ? rawValue
+        : typeof rawValue === "string"
+          ? Number(rawValue)
+          : undefined;
+    if (typeof numericValue !== "number" || Number.isNaN(numericValue)) {
+      return 18;
+    }
+    return Math.max(12, Math.min(40, numericValue));
+  }
+
+  private applyDayNumberStyles(): void {
+    const size = `${this.dayNumberSize}px`;
+    const isDark = document.body.classList.contains("theme-dark");
+    const color = isDark
+      ? "rgba(255, 255, 255, 0.95)"
+      : "rgba(20, 20, 20, 0.9)";
+    const targets = [this.containerEl, document.documentElement as HTMLElement];
+    for (const target of targets) {
+      target.style.setProperty("--bases-day-number-size", size);
+      target.style.setProperty("--bases-day-number-color", color);
+      target.style.setProperty(
+        "--bases-day-cell-height",
+        `${this.dayCellHeight}px`,
+      );
+    }
+  }
+
+  private getDayCellHeight(): number {
+    const rawValue = this.config.get("dayCellHeight");
+    const numericValue =
+      typeof rawValue === "number"
+        ? rawValue
+        : typeof rawValue === "string"
+          ? Number(rawValue)
+          : undefined;
+    if (typeof numericValue !== "number" || Number.isNaN(numericValue)) {
+      return 120;
+    }
+    return Math.max(80, Math.min(220, numericValue));
+  }
+
+  private getBooleanConfig(key: string, fallback = false): boolean {
+    const value = this.config.get(key);
+    if (typeof value === "boolean") {
+      return value;
+    }
+    return fallback;
   }
 }
