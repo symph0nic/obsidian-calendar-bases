@@ -19,6 +19,8 @@ interface CalendarReactViewProps {
   imageProperty?: BasesPropertyId | null;
   propertyOverlayOpacity: number;
   alignPropertiesBottom: boolean;
+  propertyChipScale: number;
+  highlightWeekends: boolean;
   onEntryClick: (entry: BasesEntry, isModEvent: boolean) => void;
   onEntryContextMenu: (evt: React.MouseEvent, entry: BasesEntry) => void;
   onEventDrop?: (
@@ -36,6 +38,8 @@ export const CalendarReactView: React.FC<CalendarReactViewProps> = ({
   imageProperty,
   propertyOverlayOpacity,
   alignPropertiesBottom,
+  propertyChipScale: _propertyChipScale,
+  highlightWeekends,
   onEntryClick,
   onEntryContextMenu,
   onEventDrop,
@@ -437,6 +441,11 @@ export const CalendarReactView: React.FC<CalendarReactViewProps> = ({
       eventClick={handleEventClick}
       eventMouseEnter={handleEventMouseEnter}
       eventDrop={handleEventDrop}
+      dayCellClassNames={(arg) => {
+        if (!highlightWeekends) return [];
+        const dow = arg.date.getDay();
+        return dow === 0 || dow === 6 ? ["bases-weekend-highlight"] : [];
+      }}
       height="auto"
       fixedWeekCount={true}
       fixedMirrorParent={document.body ?? undefined}

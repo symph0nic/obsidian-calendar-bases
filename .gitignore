@@ -24,3 +24,4 @@ data.json
 # Exclude test-deploy mechanism
 deploy.sh
 update-plugin.ps1
+update-plugin-home.ps1
