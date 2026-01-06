@@ -288,28 +288,28 @@ export const CalendarReactView: React.FC<CalendarReactViewProps> = ({
           ? { backgroundColor: overlayBackground }
           : undefined;
 
-      if (previewImage) {
-        const renderChip = (
-          content: React.ReactNode,
-          key: string | number,
-          extraClass?: string,
-        ) => (
-          <div
-            key={key}
-            className={["bases-calendar-event-chip", extraClass]
-              .filter(Boolean)
-              .join(" ")}
-            style={{
-              ...chipOverlayStyle,
-              color: "var(--text-on-accent)",
-              filter: "brightness(1) saturate(1)",
-              mixBlendMode: "normal",
-            }}
-          >
-            {content}
-          </div>
-        );
+      const renderChip = (
+        content: React.ReactNode,
+        key: string | number,
+        extraClass?: string,
+      ) => (
+        <div
+          key={key}
+          className={["bases-calendar-event-chip", extraClass]
+            .filter(Boolean)
+            .join(" ")}
+          style={{
+            ...chipOverlayStyle,
+            color: "var(--text-on-accent)",
+            filter: "brightness(1) saturate(1)",
+            mixBlendMode: "normal",
+          }}
+        >
+          {content}
+        </div>
+      );
 
+      if (previewImage) {
         const contentClasses = ["bases-calendar-event-content"];
         if (alignPropertiesBottom) {
           contentClasses.push("bases-calendar-event-content--align-bottom");
@@ -347,15 +347,7 @@ export const CalendarReactView: React.FC<CalendarReactViewProps> = ({
                     </div>
                   )}
                 </>
-              ) : (
-                renderChip(
-                  <div className="bases-calendar-event-title">
-                    {entry.file.basename}
-                  </div>,
-                  "basename",
-                  "bases-calendar-event-chip--title",
-                )
-              )}
+              ) : null}
             </div>
           </div>
         );
@@ -371,22 +363,24 @@ export const CalendarReactView: React.FC<CalendarReactViewProps> = ({
 
         return (
           <div className={eventClasses.join(" ")}>
-            <div
-              className={contentClasses.join(" ")}
-              style={nonImageOverlayStyle}
-            >
-              <div className="bases-calendar-event-title">
-                <PropertyValue value={firstProperty.value} />
-              </div>
+            <div className={contentClasses.join(" ")}>
+              {renderChip(
+                <div className="bases-calendar-event-title">
+                  <PropertyValue value={firstProperty.value} />
+                </div>,
+                firstProperty.propertyId,
+                "bases-calendar-event-chip--title",
+              )}
               {remainingProperties.length > 0 && (
                 <div className="bases-calendar-event-properties">
-                  {remainingProperties.map(({ propertyId: prop, value }) => (
-                    <div key={prop} className="bases-calendar-event-property">
+                  {remainingProperties.map(({ propertyId: prop, value }) =>
+                    renderChip(
                       <span className="bases-calendar-event-property-value">
                         <PropertyValue value={value} />
-                      </span>
-                    </div>
-                  ))}
+                      </span>,
+                      prop,
+                    ),
+                  )}
                 </div>
               )}
             </div>
@@ -394,23 +388,8 @@ export const CalendarReactView: React.FC<CalendarReactViewProps> = ({
         );
       }
 
-      // Fallback to file basename if no properties or image
-      const contentClasses = ["bases-calendar-event-content"];
-      if (alignPropertiesBottom) {
-        contentClasses.push("bases-calendar-event-content--align-bottom");
-      }
-      return (
-        <div className={eventClasses.join(" ")}>
-          <div
-            className={contentClasses.join(" ")}
-            style={nonImageOverlayStyle}
-          >
-            <div className="bases-calendar-event-title">
-              {entry.file.basename}
-            </div>
-          </div>
-        </div>
-      );
+      // No properties and no image: render nothing
+      return null;
     },
     [
       properties,

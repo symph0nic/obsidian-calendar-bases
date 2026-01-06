@@ -247,6 +247,10 @@ body {
   min-height: 90px;
 }
 
+.bases-calendar-event--no-image {
+  background-color: transparent;
+}
+
 .bases-calendar-event-image {
   position: absolute;
   inset: 0;

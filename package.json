@@ -1,6 +1,6 @@
 {
 	"name": "calendar-bases",
-	"version": "0.4.1",
+	"version": "0.4.2",
 	"description": "Adds calendar view to Obsidian Bases, with image support.",
 	"main": "main.js",
 	"scripts": {
