@@ -649,7 +649,15 @@ body {
     margin: 0 !important;
   }
 
-  .fc-daygrid-event .fc-event-main,
-  .fc-daygrid-event .fc-event-main-frame {
-    height: 100%;
-  }
+.fc-daygrid-event .fc-event-main,
+.fc-daygrid-event .fc-event-main-frame {
+  height: 100%;
+}
+
+.internal-embed.bases-embed .fc-scrollgrid,
+.internal-embed.bases-embed .fc-daygrid-body,
+.internal-embed.bases-embed .fc-scrollgrid-sync-table,
+.internal-embed.bases-embed .fc-col-header {
+  width: 100% !important;
+  min-width: 100% !important;
+}
