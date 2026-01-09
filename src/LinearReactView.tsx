@@ -2,6 +2,7 @@ import React, { useCallback, useLayoutEffect, useMemo, useRef, useState } from "
 import { BasesEntry, BasesPropertyId, DateValue, Value } from "obsidian";
 import { useApp } from "./hooks";
 import { resolveEntryImage } from "./utils/entry-images";
+import { cssUrl } from "./utils/css";
 import { tryGetValue } from "./utils/bases";
 import { LinearEntry } from "./linear-view";
 
@@ -367,7 +368,7 @@ export const LinearReactView: React.FC<LinearReactViewProps> = ({
           {previewImage && (
             <div
               className="linear-calendar-day-image"
-              style={{ backgroundImage: `url(${previewImage.url})` }}
+              style={{ backgroundImage: cssUrl(previewImage.url) }}
             />
           )}
           {previewImage && <div className="linear-calendar-day-scrim" />}

@@ -10,6 +10,7 @@ import { BasesEntry, BasesPropertyId, DateValue, Value } from "obsidian";
 import React, { useCallback, useRef } from "react";
 import { useApp } from "./hooks";
 import { resolveEntryImage } from "./utils/entry-images";
+import { cssUrl } from "./utils/css";
 import { tryGetValue } from "./utils/bases";
 
 interface CalendarReactViewProps {
@@ -321,7 +322,7 @@ export const CalendarReactView: React.FC<CalendarReactViewProps> = ({
           <div className={eventClasses.join(" ")}>
             <div
               className="bases-calendar-event-image"
-              style={{ backgroundImage: `url(${previewImage.url})` }}
+              style={{ backgroundImage: cssUrl(previewImage.url) }}
             />
             <div className="bases-calendar-event-scrim" />
             <div className={contentClasses.join(" ")}>
